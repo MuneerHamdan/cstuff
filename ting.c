@@ -5,10 +5,17 @@
 #include <unistd.h>
 
 int running = 1;
+int* stuff;
+int size = 1;
 
-void* print(void* arg) {
+void* run(void* args) {
+
+  stuff = malloc(size * sizeof(int));
+  if (stuff == NULL)
+    printf("malloc failed\n");
+
   while (running) {
-    printf("-");
+    printf("%d", stuff[size]);
     fflush(stdout);
     usleep(200000);
   }
@@ -16,26 +23,28 @@ void* print(void* arg) {
 }
 
 // run thing
-void run() {
-  char cmd[100];
-  int sz = sizeof(cmd) / sizeof(char);
-  // while input is not quit
-  int cmp = -1;
+void start() {
 
-  int linenumber = 0;
+  printf("\n\
+      type 'quit' at any time to quit program\n\
+      ");
+
+  char c;
 
   pthread_t thread;
-  pthread_create(&thread, NULL, print, NULL);
-  while (1) {
-    //clear input string
-    memset(cmd, 0, sizeof(cmd));
-    //get input string
-    if (fgets(cmd, sz, stdin) == NULL)
-      break;
-    //compare input string
-    cmp = strcmp(cmd, "quit\n");
+  pthread_create(&thread, NULL, run, NULL);
 
-    if (cmp == 0) {
+  while (1) {
+
+    c = getchar();
+
+    if (c == 'a') {
+      size++;
+      stuff = realloc(stuff, size * sizeof(int));
+      stuff[size - 1] = size;
+    }
+
+    if (c == 'q') {
       running = 0;
       break;
     }
@@ -50,7 +59,7 @@ int main() {
   printf("\
       welcome, what would you like to do\n\
       \n\
-      run: run the program\n\
+      start: start the program\n\
       help: show this message\n\
       quit: quit\n\
       ");
@@ -61,13 +70,12 @@ int main() {
   //get s1 from user input
   fgets(s1, sz, stdin);
   //make s2
-  char s2[] = "run\n";
+  char s2[] = "start\n";
   //compare s1 s2
   int cmp = strcmp(s1, s2);
   if (cmp == 0)
-    run();
-  else
+    start();
 
-
+  free(stuff);
   return 0;
 }
